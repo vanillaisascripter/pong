@@ -1,13 +1,21 @@
-body {
+html, body {
   margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
   background: #000;
+}
+
+body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
 }
 
 canvas {
   background: #111;
-  touch-action: none; /* helps prevent scrolling on touch */
+  width: 100%;
+  height: 100%;
+  touch-action: none; /* prevent scroll/zoom while touching canvas */ /* [web:50][web:56] */
 }
