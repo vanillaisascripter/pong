@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>3D Ping Pong</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+      }
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+    <script>
+      // Scene setup
+      const canvas = document.createElement('canvas');
+      document.body.appendChild(canvas);
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 5, 10);
+      camera.lookAt(0, 0, 0);
+
+      // Table
+      const tableGeometry = new THREE.BoxGeometry(10, 0.1, 20);
+      const tableMaterial = new THREE.MeshPhongMaterial({ color: 0x228B22 });
+      const table = new THREE.Mesh(tableGeometry, tableMaterial);
+      table.position.set(0, -0.05, 0);
+      scene.add(table);
+
+      // Paddles
+      const paddleGeometry = new THREE.BoxGeometry(1, 0.2, 0.2);
+      const paddleMaterial = new THREE.MeshPhongMaterial({ color: 0xFF0000 });
+      const leftPaddle = new THREE.Mesh(paddleGeometry, paddleMaterial);
+      leftPaddle.position.set(-4, 0, 0);
+      scene.add(leftPaddle);
+
+      const rightPaddle = new THREE.Mesh(paddleGeometry, paddleMaterial);
+      rightPaddle.position.set(4, 0, 0);
+      scene.add(rightPaddle);
+
+      // Ball
+      const ballGeometry = new THREE.SphereGeometry(0.2, 16, 16);
+      const ballMaterial = new THREE.MeshPhongMaterial({ color: 0xFFFFFF });
+      const ball = new THREE.Mesh(ballGeometry, ballMaterial);
+      ball.position.set(0, 0.2, 0);
+      scene.add(ball);
+
+      // Physics
+      let ballVelocity = { x: 0.1, y: 0.05, z: 0.1 };
+      let leftPaddleVelocity = 0;
+      let rightPaddleVelocity = 0;
+
+      // Controls (touch only)
+      let touches = [];
+      canvas.addEventListener('touchstart', e => { touches = Array.from(e.touches); });
+      canvas.addEventListener('touchmove', e => { touches = Array.from(e.touches); });
+      canvas.addEventListener('touchend', e => { touches = Array.from(e.touches); });
+
+      // Game loop
+      function animate() {
+        // Update paddle positions from touch
+        leftPaddleVelocity = 0;
+        rightPaddleVelocity = 0;
+        for (let touch of touches) {
+          const x = (touch.clientX / window.innerWidth) * 2 - 1;
+          if (x < 0) {
+            leftPaddleVelocity = (touch.clientY / window.innerHeight - 0.5) * 2;
+          } else {
+            rightPaddleVelocity = (touch.clientY / window.innerHeight - 0.5) * 2;
+          }
+        }
+        leftPaddle.position.y += leftPaddleVelocity * 0.1;
+        rightPaddle.position.y += rightPaddleVelocity * 0.1;
+        leftPaddle.position.y = Math.max(-2, Math.min(2, leftPaddle.position.y));
+        rightPaddle.position.y = Math.max(-2, Math.min(2, rightPaddle.position.y));
+
+        // Update ball
+        ball.position.x += ballVelocity.x;
+        ball.position.y += ballVelocity.y;
+        ball.position.z += ballVelocity.z;
+
+        // Table collisions
+        if (ball.position.y < 0.1 || ball.position.y > 2) {
+          ballVelocity.y = -ballVelocity.y;
+        }
+        if (ball.position.x < -5 || ball.position.x > 5) {
+          ballVelocity.x = -ballVelocity.x;
+        }
+        if (ball.position.z < -10 || ball.position.z > 10) {
+          ballVelocity.z = -ballVelocity.z;
+        }
+
+        // Paddle collisions
+        if (ball.position.x < -4.5 && ball.position.y > leftPaddle.position.y - 0.1 && ball.position.y < leftPaddle.position.y + 0.1) {
+          ballVelocity.x = -ballVelocity.x;
+        }
+        if (ball.position.x > 4.5 && ball.position.y > rightPaddle.position.y - 0.1 && ball.position.y < rightPaddle.position.y + 0.1) {
+          ballVelocity.x = -ballVelocity.x;
+        }
+
+        renderer.render(scene, camera);
+        requestAnimationFrame(animate);
+      }
+      animate();
+    </script>
+  </body>
+</html>
